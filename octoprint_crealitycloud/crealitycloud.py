@@ -48,6 +48,7 @@ class CrealityCloud(object):
             
         if self._aliprinter.connect != 1:
             self._logger.info('disconnect printer')
+            self._aliprinter._updata_data()
             return
 
         #upload box verson
@@ -99,19 +100,16 @@ class CrealityCloud(object):
         if self._aliprinter._filename is not None:
             filename = str(self._aliprinter._filename[0])
             filename = filename.replace("GCO", "gcode")
+            self._aliprinter._upload_data({
+            "print": str(filename),
+            "printProgress": int(self._aliprinter._percent)})
         else:
             filename = ''
         self._aliprinter._upload_data({
-            "print": str(filename),
-            "printProgress": int(self._aliprinter._percent)})
+            "mcu_is_print": self._aliprinter._mcu_is_print})
         #clean filename and mcu_is_print
         if self._aliprinter._mcu_is_print == 0:
             self._aliprinter._filename = None
-        #updata printer status
-        if self._aliprinter.printer.is_printing() == True:
-            self._aliprinter.state = 1
-        else:
-            self._aliprinter.state = 0
 
         self._aliprinter._upload_data(self.data)
 
