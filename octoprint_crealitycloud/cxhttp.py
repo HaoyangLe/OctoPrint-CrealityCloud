@@ -24,6 +24,17 @@ class CrealityAPI(object):
         r = random.random() % (99999 - 10000) + 10000
         return "Raspberry" + str(time.tm_sec) + str(10) + str(r)  # time.tvm_usec
 
+    def getconfig(slef,token):
+        url = "http://2-model-admin-dev.crealitygroup.com/api/cxy/v2/device/user/importDevice"
+        headers = {
+            "Content-Type": "application/json",
+            "__CXY_JWTOKEN_": token
+        }
+        data = '{"mac": "F1E2A4B288"}'
+        response = requests.post(url, data=data, headers=headers, timeout=2).text
+        res = json.loads(response)
+        return res
+
     def getAddrress1(self):
         url = self.__homeurl + "/api/cxy/v2/common/getAddrress"
         response = requests.post(url, data="{}", headers=self.__headers, timeout=2).text

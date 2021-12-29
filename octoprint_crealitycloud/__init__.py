@@ -3,6 +3,8 @@ from __future__ import absolute_import
 
 import logging
 import os
+import json
+import io
 
 import octoprint.plugin
 from flask import request
@@ -94,6 +96,29 @@ class CrealitycloudPlugin(
             js=["js/crealitycloud.js", "js/qrcode.min.js"], css=["css/crealitycloud.css"]
         )
 
+    #get token
+    @octoprint.plugin.BlueprintPlugin.route("/get_token", methods=["POST"])
+    def get_token(self):
+        print(request.json["token"])
+        self._res = self._cxapi.getconfig(request.json["token"])["result"]
+        print(self._res)
+        if self._res["regionId"] == 0:
+            region = 0
+        else:
+            region = 1
+        self._config = {
+            "deviceName": self._res["deviceName"],
+            "deviceSecret": self._res["deviceSecret"],
+            "productKey": self._res["productKey"],
+            "region": region
+            }
+        with io.open(
+            self.get_plugin_data_folder()+'/config.json', "w", encoding="utf-8"
+        ) as config_file:
+            self._config = json.dump(self._config,config_file, indent=2, separators=(',',':'))
+        print(self._config)
+        return {"code": 0}
+
     @octoprint.plugin.BlueprintPlugin.route("/makeQR", methods=["GET", "POST"])
     def make_qr(self):
         if os.path.exists(self.get_plugin_data_folder() + "/code"):
@@ -139,6 +164,8 @@ class CrealitycloudPlugin(
             self._crealitycloud._aliprinter._str_curFeedratePct = cmd
 
     def gCodeHandlerreceived(self, comm_instance, line, *args, **kwargs):
+        if not self._crealitycloud._iot_connected:
+            return
         if "SD printing byte " in line:
             self._crealitycloud._aliprinter._mcu_is_print = 1
             self._crealitycloud._aliprinter.state = 1
@@ -151,14 +178,12 @@ class CrealitycloudPlugin(
                     rightnum = rightnum.lstrip("/")
                     break
                 leftnum = leftnum + str(i)
-            self._crealitycloud._aliprinter._percent = float(
+            self._crealitycloud._aliprinter.printProgress = int(
                 (float(leftnum) / float(rightnum)) * 100
             )
             return line
         elif "Current file: " in line:
-            self._crealitycloud._aliprinter._filename = str(
-                str(line).lstrip("Current file: ")
-            ).rsplit("\n")
+            self._crealitycloud._aliprinter.filename = line
             return line
         elif "Not SD printing" in line:
             self._crealitycloud._aliprinter._mcu_is_print = 0

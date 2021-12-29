@@ -25,6 +25,28 @@ $(function () {
       correctLevel: QRCode.CorrectLevel.H
     });
     // TODO: Implement your plugin's view model here.
+
+    document.getElementById("token_file_input").addEventListener("change",function () {
+      console.log("change");
+      var selectedFile = document.getElementById('token_file_input').files[0];
+      var reader = new FileReader();
+      reader.readAsText(selectedFile);
+      reader.onload = function(){
+        console.log(this.result)
+        $.ajax({
+          type: "POST",
+          contentType: "application/json; charset=utf-8",
+          url: PLUGIN_BASEURL + "crealitycloud/get_token",
+          data: JSON.stringify({ token: this.result}),
+          dataType: "json",
+          success: function (data) {
+            alert("success")
+          }
+        }
+        )
+      }
+    })
+
     self.openCrealityCloud = function () {
       window.open("http://www.crealitycloud.com");
     };
@@ -38,7 +60,7 @@ $(function () {
         success: function (data) {
           if (data.actived == 1) {
             self.isAcitived(true);
-            self.activedMsg("Machine has actived on " + data.country + " server")
+            self.activedMsg("Raspberry Pi has been activated on the " + data.country + " server")
             self.HAS_WAIT_TIMEOUT = self.WAIT_TIMEOUT
           } else {
             self.isAcitived(false);
@@ -81,7 +103,7 @@ $(function () {
       if (self.HAS_WAIT_TIMEOUT < self.WAIT_TIMEOUT) {
         self.HAS_WAIT_TIMEOUT = self.HAS_WAIT_TIMEOUT + 3;
         setTimeout(function () { self.waitTimout(); }, 3000)
-        $("#bindCrealityCloud").html("reflush after " + (self.WAIT_TIMEOUT - self.HAS_WAIT_TIMEOUT) + "s")
+        $("#bindCrealityCloud").html("Refersh in " + (self.WAIT_TIMEOUT - self.HAS_WAIT_TIMEOUT) + "seconds")
       } else {
         self.HAS_WAIT_TIMEOUT = 0;
         self.disabled(false);

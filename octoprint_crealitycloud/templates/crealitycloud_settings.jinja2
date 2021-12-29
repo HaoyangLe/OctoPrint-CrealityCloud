@@ -1,27 +1,38 @@
 <div class="container_fluid" id="bindPage" data-bind="text:activedMsg,visible: isAcitived()">
 </div>
+
+
+
+<div style="display:none">
 <div data-bind="visible: !isAcitived()">
 <span>
-  Server location
+  Server
   <select id="region" data-bind="event:{change:changeRegion}">
     <option value ="US">US</option>
     <option value ="China">China</option>
   </select>
 </span>
-<div><a target="view_window" data-bind="attr:{href:appdownloadUrl}">Download crealitycloud app</a></div>
+<div><a target="view_window" data-bind="attr:{href:appdownloadUrl}">Download the Creality Cloud app</a></div>
 <br>
 <div class="btn_bind" data-bind="visible: !disabled()">
               <button
                 id="bindbtn"
                 data-bind="click:bind"
               >
-                Click here get bind code
+                Click to generate code
               </button>
 </div>
 
 <div id="qrcode"></div>
 <div id="idCode"></div>
 <div id="bindCrealityCloud"></div>
-<div data-bind="visible: disabled()">Please use crealitycloud app scan the qrcode or manual input code</div>
+<div data-bind="visible: disabled()">Scan the QR code with the Creality Cloud app or manually enter the code.</div>
+</div>
 </div>
 
+
+
+<div data-bind="visible: !isAcitived()">
+  <div><a target="view_window" data-bind="attr:{href:appdownloadUrl}">Download the Creality Cloud app</a></div>
+  <input id="token_file_input" type="file" class="settings_token_input">
+</div>
