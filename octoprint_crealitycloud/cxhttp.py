@@ -1,6 +1,6 @@
 import json
 import random
-
+import uuid
 import requests
 
 
@@ -30,7 +30,8 @@ class CrealityAPI(object):
             "Content-Type": "application/json",
             "__CXY_JWTOKEN_": token
         }
-        data = '{"mac": "F1E2A4B288"}'
+        mac=uuid.UUID(int = uuid.getnode()).hex[-12:].upper()
+        data = '{"mac": "' + str(mac) + '"}'
         response = requests.post(url, data=data, headers=headers, timeout=2).text
         res = json.loads(response)
         return res

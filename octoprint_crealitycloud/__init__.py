@@ -99,25 +99,30 @@ class CrealitycloudPlugin(
     #get token
     @octoprint.plugin.BlueprintPlugin.route("/get_token", methods=["POST"])
     def get_token(self):
-        print(request.json["token"])
-        self._res = self._cxapi.getconfig(request.json["token"])["result"]
-        print(self._res)
-        if self._res["regionId"] == 0:
-            region = 0
-        else:
-            region = 1
-        self._config = {
-            "deviceName": self._res["deviceName"],
-            "deviceSecret": self._res["deviceSecret"],
-            "productKey": self._res["productKey"],
-            "region": region
-            }
-        with io.open(
-            self.get_plugin_data_folder()+'/config.json', "w", encoding="utf-8"
-        ) as config_file:
-            self._config = json.dump(self._config,config_file, indent=2, separators=(',',':'))
-        print(self._config)
-        return {"code": 0}
+
+        self._logger.info('token = ' + request.json["token"])
+
+        try:
+            self._res = self._cxapi.getconfig(request.json["token"])["result"]
+            if self._res["regionId"] == 0:
+                region = 0
+            else:
+                region = 1
+            self._config = {
+                "deviceName": self._res["deviceName"],
+                "deviceSecret": self._res["deviceSecret"],
+                "productKey": self._res["productKey"],
+                "region": region
+                }
+            with io.open(
+                self.get_plugin_data_folder()+'/config.json', "w", encoding="utf-8"
+            ) as config_file:
+                json.dump(self._config,config_file, indent=2, separators=(',',':'))
+                self._logger.info(self._config)
+            return {"code": 0}
+        except Exception as e:
+            self._logger.error(str(e))
+            return {"code": -1}
 
     @octoprint.plugin.BlueprintPlugin.route("/makeQR", methods=["GET", "POST"])
     def make_qr(self):

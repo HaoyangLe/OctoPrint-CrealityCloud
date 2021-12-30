@@ -40,7 +40,12 @@ $(function () {
           data: JSON.stringify({ token: this.result}),
           dataType: "json",
           success: function (data) {
-            alert("success")
+            if (data.code == 0){
+              self.getStatus(false)
+              self.isAcitived(true);
+            }else{
+              alert("Failed to bind Creality Cloud")
+            }
           }
         }
         )
