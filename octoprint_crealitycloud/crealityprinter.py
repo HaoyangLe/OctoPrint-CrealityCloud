@@ -42,43 +42,38 @@ class ErrorCode(Enum):
 class CrealityPrinter(object):
     def __init__(self, plugin, lk):
 
-        self.data = {}
-
+        self._logger = logging.getLogger("octoprint.plugins.crealityprinter")
+        self._config = CreailtyConfig(plugin)
+        self._filecontrol = filecontrol(plugin)
+        self.__linkkit = lk
+        self.settings = plugin._settings
+        self.printer = plugin._printer
+        self.plugin = plugin
+        self.Filemanager = self._filecontrol.Filemanager
+        self._boxVersion = "rasp_v2.01b99"
+        self._state = -1
+        self._stop = 0
+        self._pause = 0
+        self._connected = 0
+        self._printProgress = -1
+        self._mcu_is_print = 0
+        self._printId = ''
         self._nozzleTemp = -1
         self._nozzleTemp2 = -1
         self._bedTemp = -1
         self._bedTemp2 = -1
-        self._state = -1
-        self._printProgress = -1
-
-        self.__linkkit = lk
-        self.plugin = plugin
-        self._logger = logging.getLogger("octoprint.plugins.crealityprinter")
-        self._config = CreailtyConfig(plugin)
-        self._settings = plugin._settings
-        self.printer = plugin._printer
-        self._filecontrol = filecontrol(plugin)
-        self.Filemanager = self._filecontrol.Filemanager
-        self._stop = 0
-        self._pause = 0
-        self._gcodeCmd = None
-        self._xcoordinate = None
-        self._ycoordinate = None
-        self._zcoordinate = None
         self._position = ''
         self._curFeedratePct = 0
-        self._str_curFeedratePct = ""
-        self._APILicense = None
-        self._initString = None
-        self._DIDString = None
         self._dProgress = 0
         self._reqGcodeFile = None
         self._opGcodeFile = None
         self._filename = None
-        self._boxVersion = "rasp_v2.01b99"
+        self._gcodeCmd = None
+        self._APILicense = None
+        self._initString = None
+        self._DIDString = None
         self.bool_boxVersion = None
-        self._mcu_is_print = 0
-        self._connected = 0
+        self._str_curFeedratePct = ""
         self._logger.info("creality crealityprinter init!")
 
     def __setitem__(self, k, v):
@@ -100,9 +95,10 @@ class CrealityPrinter(object):
 
     @printId.setter
     def printId(self, v):
-        self._printId = v
-        self._upload_data({"printId": self._printId})
-        self._logger.info("printId:" + self._printId)
+        if self._printId != v:
+            self._printId = v
+            self._upload_data({"printId": self._printId})
+            self._logger.info("printId:" + self._printId)
 
     @property
     def filename(self):
@@ -217,6 +213,7 @@ class CrealityPrinter(object):
         if int(v) != int(self._state):
             self._state = v
             self._upload_data({"state": self._state})
+            self._state_time = int(time.time())
 
     @property
     def dProgress(self):
@@ -448,7 +445,7 @@ class CrealityPrinter(object):
 
         # Free space usage
         free = psutil.disk_usage(
-            self._settings.global_get_basefolder("uploads", check_writable=False)
+            self.settings.global_get_basefolder("uploads", check_writable=False)
         ).free
 
         self._logger.info(

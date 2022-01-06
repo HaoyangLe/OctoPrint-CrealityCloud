@@ -40,10 +40,6 @@ class CrealityCloud(object):
         return self._iot_connected
 
     def _upload_timing(self):
-
-        # time_difference = int(time.time()) - self._aliprinter.app_interface_time
-        # if time_difference > 60:
-        #     return
             
         if self._aliprinter.connect != 1:
             self._logger.info('disconnect printer')
@@ -86,8 +82,16 @@ class CrealityCloud(object):
         #send m27,m27c
         self._aliprinter.printer.commands(['M27'])
         self._aliprinter.printer.commands(['M27C'])
-        
-        
+
+        #check printer state
+        if (
+                self._aliprinter.mcu_is_print==0 
+            and not self._aliprinter.printer.is_printing() 
+            and int(time.time())-self._aliprinter._state_time > 5
+            ):
+            self._aliprinter.state = 0
+            self._aliprinter.printId = '0'
+
     def get_server_region(self):
         if self.config_data.get("region") is not None:
             if self.config_data["region"] == 0:
@@ -125,6 +129,7 @@ class CrealityCloud(object):
             self._logger.info("aliyun loop")
             self._aliprinter = CrealityPrinter(self.plugin, self.lk)
             time.sleep(3)
+            self._aliprinter.ipAddress
             if not self.timer:
                 self._upload_timer.start()
                 self.timer = True
@@ -304,9 +309,6 @@ class CrealityCloud(object):
 
         # get M114 payload
         elif event == Events.POSITION_UPDATE:
-            self._aliprinter._xcoordinate = payload["x"]
-            self._aliprinter._ycoordinate = payload["y"]
-            self._aliprinter._zcoordinate = payload["z"]
             self._aliprinter._position = (
                 "X:"
                 + str(payload["x"])
@@ -324,27 +326,6 @@ class CrealityCloud(object):
     def on_progress(self, fileid, progress):
         self._aliprinter.printProgress = progress
 
-    def start_active_service(self, country):
-        if self._active_service_thread is not None:
-            self._active_service_thread = None
-        env = os.environ.copy()
-        env["HOME_LOG"] = self.plugin.get_plugin_data_folder()
-        env["OCTO_DATA_DIR"] = self.plugin.get_plugin_data_folder()
-        env["REGION"] = country
-        importcode_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/bin/importcode.sh"
-        )
-        dest_importcode_path = self.plugin.get_plugin_data_folder() + "/importcode.sh"
-        if os.path.exists(dest_importcode_path):
-            os.remove(dest_importcode_path)
-        os.system("cp " + importcode_path + " " + dest_importcode_path)
-        active_service_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/bin/active_server.sh"
-        )
-        self._active_service_thread = threading.Thread(
-            target=self._runcmd, args=(["/bin/bash", active_service_path], env)
-        )
-        self._active_service_thread.start()
 
     def start_p2p_service(self):
         if self._p2p_service_thread is not None:

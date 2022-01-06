@@ -124,24 +124,24 @@ class CrealitycloudPlugin(
             self._logger.error(str(e))
             return {"code": -1}
 
-    @octoprint.plugin.BlueprintPlugin.route("/makeQR", methods=["GET", "POST"])
-    def make_qr(self):
-        if os.path.exists(self.get_plugin_data_folder() + "/code"):
-            os.remove(self.get_plugin_data_folder() + "/code")
-        country = request.json["country"]
-        self._crealitycloud.start_active_service(country)
-        return {"code": 0}
+    # @octoprint.plugin.BlueprintPlugin.route("/makeQR", methods=["GET", "POST"])
+    # def make_qr(self):
+    #     if os.path.exists(self.get_plugin_data_folder() + "/code"):
+    #         os.remove(self.get_plugin_data_folder() + "/code")
+    #     country = request.json["country"]
+    #     self._crealitycloud.start_active_service(country)
+    #     return {"code": 0}
 
-    @octoprint.plugin.BlueprintPlugin.route("/machineqr", methods=["GET"])
-    def get_machine_short_id(self):
-        code_path = self.get_plugin_data_folder() + "/code"
-        if os.path.exists(code_path):
-            with open(code_path, "r") as f:
-                self.short_code = f.readline()
-                f.close()
-                return {"code": self.short_code}
-        else:
-            return {"code": "0"}
+    # @octoprint.plugin.BlueprintPlugin.route("/machineqr", methods=["GET"])
+    # def get_machine_short_id(self):
+    #     code_path = self.get_plugin_data_folder() + "/code"
+    #     if os.path.exists(code_path):
+    #         with open(code_path, "r") as f:
+    #             self.short_code = f.readline()
+    #             f.close()
+    #             return {"code": self.short_code}
+    #     else:
+    #         return {"code": "0"}
 
     @octoprint.plugin.BlueprintPlugin.route("/status", methods=["GET"])
     def get_status(self):
