@@ -90,7 +90,6 @@ class CrealityCloud(object):
             and int(time.time())-self._aliprinter._state_time > 5
             ):
             self._aliprinter.state = 0
-            self._aliprinter.printId = '0'
 
     def get_server_region(self):
         if self.config_data.get("region") is not None:
@@ -303,6 +302,7 @@ class CrealityCloud(object):
         elif event == Events.PRINT_CANCELLED:
             self.cancelled = True
             self._aliprinter.state = 4
+            self._aliprinter.printId = ""
 
         elif event == Events.PRINT_DONE:
             self._aliprinter.state = 2
