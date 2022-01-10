@@ -32,12 +32,17 @@ class CrealityCloud(object):
         self.connect_printer = False
 
         self._upload_timer = RepeatedTimer(1,self._upload_timing,run_first=True)
+        self._upload_ip_timer = RepeatedTimer(30,self._upload_ip_timing,run_first=False)
 
         self.connect_aliyun()
         
     @property
     def iot_connected(self):
         return self._iot_connected
+
+    def _upload_ip_timing(self):
+        self._aliprinter.ipAddress
+        self._upload_ip_timer.cancel()
 
     def _upload_timing(self):
             
@@ -128,7 +133,7 @@ class CrealityCloud(object):
             self._logger.info("aliyun loop")
             self._aliprinter = CrealityPrinter(self.plugin, self.lk)
             time.sleep(3)
-            self._aliprinter.ipAddress
+            self._upload_ip_timer.start()
             self._aliprinter.printId = ''
             self._aliprinter.printProgress = 0
             if not self.timer:
@@ -319,11 +324,6 @@ class CrealityCloud(object):
                 + " Z:"
                 + str(payload["z"])
             )
-
-        # get local ip address
-        elif event == Events.CONNECTIVITY_CHANGED:
-            if payload["new"] == True:
-                self._aliprinter.ipAddress
 
     def on_progress(self, fileid, progress):
         self._aliprinter.printProgress = progress
