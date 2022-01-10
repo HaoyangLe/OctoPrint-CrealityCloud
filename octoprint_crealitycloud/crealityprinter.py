@@ -147,7 +147,7 @@ class CrealityPrinter(object):
         self._ReqPrinterPara = int(v)
         if self._ReqPrinterPara == 0:
             self._upload_data({"curFeedratePct": self._curFeedratePct})
-        if self._ReqPrinterPara == 1:
+        # if self._ReqPrinterPara == 1:
             if self.printer.is_operational() and not self.printer.is_printing():
                 self._autohome = 1
                 self.printer.commands(["M114"])

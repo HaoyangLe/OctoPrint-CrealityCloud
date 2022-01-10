@@ -129,6 +129,8 @@ class CrealityCloud(object):
             self._aliprinter = CrealityPrinter(self.plugin, self.lk)
             time.sleep(3)
             self._aliprinter.ipAddress
+            self._aliprinter.printId = ''
+            self._aliprinter.printProgress = 0
             if not self.timer:
                 self._upload_timer.start()
                 self.timer = True
