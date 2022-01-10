@@ -245,7 +245,7 @@ class CrealityCloud(object):
         if self.lk is not None:
             if os.path.exists("/dev/video0"):
                 self._aliprinter.video = 1
-                self.video_start()
+                # self.video_start()
             else:
                 self._aliprinter.video = 0
             self._aliprinter.state = 0
@@ -281,8 +281,8 @@ class CrealityCloud(object):
 
         elif event == "DisplayLayerProgress_layerChanged":
             self._aliprinter.layer = int(payload["currentLayer"])
-        elif event == "CrealityCloud-Video":
-            self.video_start()
+        # elif event == "CrealityCloud-Video":
+        #     self.video_start()
         elif event == Events.PRINT_FAILED:
             if self._aliprinter.stop == 0:
                 self._aliprinter.state = 3
@@ -351,17 +351,18 @@ class CrealityCloud(object):
             self._p2p_service_thread.start()
 
     def start_video_service(self):
-        if self._video_service_thread is not None:
-            self._video_service_thread = None
-        video_service_path = (
-            os.path.dirname(os.path.abspath(__file__)) + "/bin/rtsp_server.sh"
-        )
-        if self._config.p2p_data().get("APILicense") is not None:
-            env = os.environ.copy()
-            self._video_service_thread = threading.Thread(
-                target=self._runcmd, args=(["/bin/bash", video_service_path], env)
-            )
-            self._video_service_thread.start()
+        # if self._video_service_thread is not None:
+        #     self._video_service_thread = None
+        # video_service_path = (
+        #     os.path.dirname(os.path.abspath(__file__)) + "/bin/rtsp_server.sh"
+        # )
+        # if self._config.p2p_data().get("APILicense") is not None:
+        #     env = os.environ.copy()
+        #     self._video_service_thread = threading.Thread(
+        #         target=self._runcmd, args=(["/bin/bash", video_service_path], env)
+        #     )
+        #     self._video_service_thread.start()
+        pass
 
     def _runcmd(self, command, env):
         popen = subprocess.Popen(command, env=env)
