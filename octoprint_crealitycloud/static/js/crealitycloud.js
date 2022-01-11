@@ -29,10 +29,10 @@ $(function () {
           dataType: "json",
           success: function (data) {
             if (data.code == 0){
-              self.getStatus(false)
               self.isAcitived(true);
+              self.getStatus(true)
             }else{
-              alert("Failed to bind Creality Cloud")
+              alert("绑定创想云失败，请确认Key文件或重新生成Key文件")
             }
           }
         }
