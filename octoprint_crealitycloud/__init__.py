@@ -170,9 +170,9 @@ class CrealitycloudPlugin(
 
     def gCodeHandlerreceived(self, comm_instance, line, *args, **kwargs):
         if not self._crealitycloud._iot_connected:
-            return
+            return line
         if "SD printing byte " in line:
-            self._crealitycloud._aliprinter._mcu_is_print = 1
+            self._crealitycloud._aliprinter.mcu_is_print = 1
             self._crealitycloud._aliprinter.state = 1
             leftnum = ""
             rightnum = ""
@@ -191,7 +191,22 @@ class CrealitycloudPlugin(
             self._crealitycloud._aliprinter.filename = line
             return line
         elif "Not SD printing" in line:
-            self._crealitycloud._aliprinter._mcu_is_print = 0
+            if (
+                    self._crealitycloud._aliprinter.mcu_is_print == 1
+                and not self._crealitycloud._aliprinter.printer.is_printing()
+            ):
+                
+                if (
+                    not self._crealitycloud._aliprinter.printId
+                    and self._crealitycloud._aliprinter.printProgress == 100
+                ):
+                    self._crealitycloud._aliprinter.state = 2
+                    self._crealitycloud._aliprinter.printProgress = 0
+                else:
+                    self._crealitycloud._aliprinter.state = 0
+                    self._crealitycloud._aliprinter.printProgress = 0
+                self._crealitycloud._aliprinter.mcu_is_print == 0
+                
         return line
 
 

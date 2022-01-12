@@ -25,14 +25,20 @@ class CrealityAPI(object):
         return "Raspberry" + str(time.tm_sec) + str(10) + str(r)  # time.tvm_usec
 
     def getconfig(slef,token):
-        url = "http://2-model-admin-dev.crealitygroup.com/api/cxy/v2/device/user/importDevice"
+        test_url = "http://2-model-admin-dev.crealitygroup.com/api/cxy/v2/device/user/importDevice"
+        home_url = "https://model-admin.crealitygroup.com/api/cxy/v2/device/user/importDevice"
+        oversea_url = "https://model-admin2.creality.com/api/cxy/v2/device/user/importDevice"
         headers = {
             "Content-Type": "application/json",
             "__CXY_JWTOKEN_": token
         }
         mac=uuid.UUID(int = uuid.getnode()).hex[-12:].upper()
         data = '{"mac": "' + str(mac) + '"}'
-        response = requests.post(url, data=data, headers=headers, timeout=2).text
+        response = requests.post(home_url, data=data, headers=headers, timeout=2).text
+        if "result" not in response:
+            response = requests.post(oversea_url, data=data, headers=headers, timeout=2).text
+            if "result" not in response:
+                response = requests.post(test_url, data=data, headers=headers, timeout=2).text
         res = json.loads(response)
         return res
 

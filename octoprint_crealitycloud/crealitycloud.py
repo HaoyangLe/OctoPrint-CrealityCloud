@@ -46,8 +46,8 @@ class CrealityCloud(object):
 
     def _upload_timing(self):
             
-        if self._aliprinter.connect != 1:
-            self._logger.info('disconnect printer')
+        if self._aliprinter.printer.is_closed_or_error():
+            self._logger.info('disconnect printer or printer error')
             return
 
         #upload box verson
@@ -134,7 +134,6 @@ class CrealityCloud(object):
             self._aliprinter = CrealityPrinter(self.plugin, self.lk)
             time.sleep(3)
             self._upload_ip_timer.start()
-            self._aliprinter.printId = ''
             if not self.timer:
                 self._upload_timer.start()
                 self.timer = True
@@ -252,16 +251,16 @@ class CrealityCloud(object):
                 # self.video_start()
             else:
                 self._aliprinter.video = 0
-            self._aliprinter.state = 0
-            self._aliprinter.printId = ""
-            self._aliprinter.connect = 1
-            self._aliprinter.tfCard = 1
         else:
             try:
                 self.connect_aliyun()
-                self._aliprinter.state = 0
             except Exception as e:
                 self._logger.error(e)
+
+        self._aliprinter.state = 0
+        self._aliprinter.printId = ""
+        self._aliprinter.connect = 1
+        self._aliprinter.tfCard = 1
 
     def on_event(self, event, payload):
 
@@ -297,6 +296,8 @@ class CrealityCloud(object):
             self._aliprinter.connect = 0
 
         elif event == Events.PRINT_STARTED:
+            if not self._aliprinter.printId:
+                self._aliprinter.mcu_is_print = 1
             self._aliprinter.state = 1
 
         elif event == Events.PRINT_PAUSED:
@@ -308,10 +309,17 @@ class CrealityCloud(object):
         elif event == Events.PRINT_CANCELLED:
             self.cancelled = True
             self._aliprinter.state = 4
+            self._aliprinter._upload_data({"err": 1, "stop": 1, "state": 4})
+            if not self._aliprinter.printId:
+                self._aliprinter.mcu_is_print = 0
             self._aliprinter.printId = ""
+            
 
         elif event == Events.PRINT_DONE:
             self._aliprinter.state = 2
+            if not self._aliprinter.printId:
+                self._aliprinter.mcu_is_print = 0
+            self._aliprinter.printId = ""
 
         # get M114 payload
         elif event == Events.POSITION_UPDATE:
@@ -323,6 +331,7 @@ class CrealityCloud(object):
                 + " Z:"
                 + str(payload["z"])
             )
+            self._aliprinter._upload_data({"curPosition": self._aliprinter._position})
 
     def on_progress(self, fileid, progress):
         self._aliprinter.printProgress = progress
@@ -364,5 +373,3 @@ class CrealityCloud(object):
         pass
 
     def _runcmd(self, command, env):
-        popen = subprocess.Popen(command, env=env)
-        return_code = popen.wait()

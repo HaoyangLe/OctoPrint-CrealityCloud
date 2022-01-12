@@ -56,7 +56,7 @@ class CrealityPrinter(object):
         self._pause = 0
         self._connected = 0
         self._printProgress = -1
-        self._mcu_is_print = 0
+        self._mcu_is_print = -1
         self._printId = ''
         self._nozzleTemp = -1
         self._nozzleTemp2 = -1
