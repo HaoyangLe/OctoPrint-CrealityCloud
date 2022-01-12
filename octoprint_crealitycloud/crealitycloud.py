@@ -373,3 +373,5 @@ class CrealityCloud(object):
         pass
 
     def _runcmd(self, command, env):
+        popen = subprocess.Popen(command, env=env)
+        return_code = popen.wait()
