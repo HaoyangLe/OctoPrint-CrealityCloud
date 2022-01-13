@@ -106,12 +106,13 @@ class CrealityPrinter(object):
 
     @filename.setter
     def filename(self,v):
-        if v != self._filename:
-            self._filename = v  
-            filename = str(str(v).lstrip("Current file: ")).rsplit("\n")
-            filename = str(filename[0])
-            filename = filename.replace("GCO", "gcode")
-            self._upload_data({"print": str(filename)})
+        if 'no file' not in v:
+            if v != self._filename:
+                self._filename = v  
+                filename = str(str(v).lstrip("Current file: ")).rsplit("\n")
+                filename = str(filename[0])
+                filename = filename.replace("GCO", "gcode")
+                self._upload_data({"print": str(filename)})
 
     @property
     def print(self):
@@ -213,7 +214,6 @@ class CrealityPrinter(object):
         if int(v) != int(self._state):
             self._state = v
             self._upload_data({"state": self._state})
-            self._state_time = int(time.time())
 
     @property
     def dProgress(self):

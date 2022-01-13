@@ -30,6 +30,7 @@ class CrealityCloud(object):
         self.lk = None
         self.timer = False
         self.connect_printer = False
+        self.model = ''
 
         self._upload_timer = RepeatedTimer(1,self._upload_timing,run_first=True)
         self._upload_ip_timer = RepeatedTimer(30,self._upload_ip_timing,run_first=False)
@@ -84,17 +85,9 @@ class CrealityCloud(object):
             else:
                 self._logger.info('bed temperature is none')
 
-        #send m27,m27c
-        self._aliprinter.printer.commands(['M27'])
-        self._aliprinter.printer.commands(['M27C'])
-
-        #check printer state
-        if (
-                self._aliprinter.mcu_is_print==0 
-            and not self._aliprinter.printer.is_printing() 
-            and int(time.time())-self._aliprinter._state_time > 5
-            ):
-            self._aliprinter.state = 0
+        # #send m27,m27c
+        # self._aliprinter.printer.commands(['M27'])
+        # self._aliprinter.printer.commands(['M27C'])
 
     def get_server_region(self):
         if self.config_data.get("region") is not None:
@@ -256,16 +249,18 @@ class CrealityCloud(object):
                 self.connect_aliyun()
             except Exception as e:
                 self._logger.error(e)
-
-        self._aliprinter.state = 0
-        self._aliprinter.printId = ""
-        self._aliprinter.connect = 1
-        self._aliprinter.tfCard = 1
+        if self.lk is not None:
+            self._aliprinter.state = 0
+            self._aliprinter.printId = ""
+            self._aliprinter.connect = 1
+            self._aliprinter.tfCard = 1
+            self._aliprinter.printer.commands(['M115'])
 
     def on_event(self, event, payload):
 
         if event == Events.CONNECTED:
             self.device_start()
+
 
         if not self._iot_connected:
             return
@@ -278,9 +273,9 @@ class CrealityCloud(object):
 
         elif event == Events.FIRMWARE_DATA:
             if "MACHINE_TYPE" in payload["data"]:
-                machine_type = payload["data"]["MACHINE_TYPE"]
+                self.model = payload["data"]["MACHINE_TYPE"]
                 if self.lk is not None:
-                    self._aliprinter.model = machine_type
+                    self._aliprinter.model = self.model
 
         elif event == "DisplayLayerProgress_layerChanged":
             self._aliprinter.layer = int(payload["currentLayer"])
@@ -290,7 +285,7 @@ class CrealityCloud(object):
             if self._aliprinter.stop == 0:
                 self._aliprinter.state = 3
                 self._aliprinter.error = ErrorCode.PRINT_DISCONNECT.value
-                self._aliprinter.printId = ""
+                self._aliprinter._printId = ""
                 self._logger.info("print failed")
         elif event == Events.DISCONNECTED:
             self._aliprinter.connect = 0
@@ -312,14 +307,14 @@ class CrealityCloud(object):
             self._aliprinter._upload_data({"err": 1, "stop": 1, "state": 4})
             if not self._aliprinter.printId:
                 self._aliprinter.mcu_is_print = 0
-            self._aliprinter.printId = ""
+            self._aliprinter._printId = ""
             
 
         elif event == Events.PRINT_DONE:
             self._aliprinter.state = 2
             if not self._aliprinter.printId:
                 self._aliprinter.mcu_is_print = 0
-            self._aliprinter.printId = ""
+            self._aliprinter._printId = ""
 
         # get M114 payload
         elif event == Events.POSITION_UPDATE:
