@@ -95,10 +95,8 @@ class CrealityPrinter(object):
 
     @printId.setter
     def printId(self, v):
-        if self._printId != v:
-            self._printId = v
-            self._upload_data({"printId": self._printId})
-            self._logger.info("printId:" + self._printId)
+        self._printId = v
+        self._upload_data({"printId": self._printId})
 
     @property
     def filename(self):
@@ -123,11 +121,12 @@ class CrealityPrinter(object):
         self._print = url
         self.layer = 0
         printId = str(uuid.uuid1()).replace("-", "")
+        self.state = 0
+        self.dProgress = 0
         self._download_thread = threading.Thread(
             target=self._process_file_request, args=(url, printId)
         )
         self._download_thread.start()
-        self._logger.info("print:" + url)
 
     @property
     def video(self):

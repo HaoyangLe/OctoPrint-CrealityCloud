@@ -31,15 +31,21 @@ class CrealityCloud(object):
         self.timer = False
         self.connect_printer = False
         self.model = ''
+        self._printer_disconnect = False
 
-        self._upload_timer = RepeatedTimer(1,self._upload_timing,run_first=True)
+        self._upload_timer = RepeatedTimer(2,self._upload_timing,run_first=True)
         self._upload_ip_timer = RepeatedTimer(30,self._upload_ip_timing,run_first=False)
+        self._send_M27_timer = RepeatedTimer(10,self._send_M27_timing,run_first=False)
 
         self.connect_aliyun()
         
     @property
     def iot_connected(self):
         return self._iot_connected
+
+    def _send_M27_timing(self):
+        self._aliprinter.printer.commands(['M27'])
+        self._aliprinter.printer.commands(['M27C'])
 
     def _upload_ip_timing(self):
         self._aliprinter.ipAddress
@@ -48,9 +54,12 @@ class CrealityCloud(object):
     def _upload_timing(self):
             
         if self._aliprinter.printer.is_closed_or_error():
-            self._logger.info('disconnect printer or printer error')
+            if not self._printer_disconnect:
+                self._logger.info('disconnect printer or printer error')
+                self._printer_disconnect = True
             return
 
+        self._printer_disconnect = False
         #upload box verson
         if self._aliprinter.bool_boxVersion != True:
             self._aliprinter.boxVersion = self._aliprinter._boxVersion
@@ -84,10 +93,6 @@ class CrealityCloud(object):
                 self._aliprinter.bedTemp2 = int(temp_data['bed'].get('target'))
             else:
                 self._logger.info('bed temperature is none')
-
-        # #send m27,m27c
-        # self._aliprinter.printer.commands(['M27'])
-        # self._aliprinter.printer.commands(['M27C'])
 
     def get_server_region(self):
         if self.config_data.get("region") is not None:
@@ -129,6 +134,7 @@ class CrealityCloud(object):
             self._upload_ip_timer.start()
             if not self.timer:
                 self._upload_timer.start()
+                self._send_M27_timer.start()
                 self.timer = True
 
 
@@ -219,24 +225,6 @@ class CrealityCloud(object):
     def on_start(self):
         self._logger.info("plugin started")
 
-    def video_start(self):
-        initString = self._config.p2p_data().get("InitString")
-        didString = self._config.p2p_data().get("DIDString")
-        apiLicense = self._config.p2p_data().get("APILicense")
-        prop_data = {
-            "InitString": initString if initString is not None else "",
-            "DIDString": didString if didString is not None else "",
-            "APILicense": apiLicense if apiLicense is not None else "",
-        }
-
-        self.lk.thing_post_property(prop_data)
-        if initString is None:
-            return
-        self.start_video_service()
-        time.sleep(2)  # wait video process started
-        self.start_p2p_service()
-        self._logger.info("video service started")
-
     def device_start(self):
         if self.lk is not None:
             if os.path.exists("/dev/video0"):
@@ -303,8 +291,7 @@ class CrealityCloud(object):
 
         elif event == Events.PRINT_CANCELLED:
             self.cancelled = True
-            self._aliprinter.state = 4
-            self._aliprinter._upload_data({"err": 1, "stop": 1, "state": 4})
+            self._aliprinter._upload_data({"err": 1, "stop": 1, "state": 4, "printId": self._aliprinter._printId})
             if not self._aliprinter.printId:
                 self._aliprinter.mcu_is_print = 0
             self._aliprinter._printId = ""
@@ -352,20 +339,6 @@ class CrealityCloud(object):
                 target=self._runcmd, args=(["/bin/bash", p2p_service_path], env)
             )
             self._p2p_service_thread.start()
-
-    def start_video_service(self):
-        # if self._video_service_thread is not None:
-        #     self._video_service_thread = None
-        # video_service_path = (
-        #     os.path.dirname(os.path.abspath(__file__)) + "/bin/rtsp_server.sh"
-        # )
-        # if self._config.p2p_data().get("APILicense") is not None:
-        #     env = os.environ.copy()
-        #     self._video_service_thread = threading.Thread(
-        #         target=self._runcmd, args=(["/bin/bash", video_service_path], env)
-        #     )
-        #     self._video_service_thread.start()
-        pass
 
     def _runcmd(self, command, env):
         popen = subprocess.Popen(command, env=env)

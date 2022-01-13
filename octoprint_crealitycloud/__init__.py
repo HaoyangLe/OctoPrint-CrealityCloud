@@ -67,7 +67,6 @@ class CrealitycloudPlugin(
 
     ##~~ Softwareupdate hook
     def on_print_progress(self, storage, path, progress):
-        self._logger.info(storage)
         self._crealitycloud.on_progress(storage, progress)
 
     def get_update_information(self):
@@ -99,9 +98,6 @@ class CrealitycloudPlugin(
     #get token
     @octoprint.plugin.BlueprintPlugin.route("/get_token", methods=["POST"])
     def get_token(self):
-
-        self._logger.info('token = ' + request.json["token"])
-
         try:
             self._res = self._cxapi.getconfig(request.json["token"])["result"]
             if self._res["regionId"] == 0:
@@ -123,25 +119,6 @@ class CrealitycloudPlugin(
         except Exception as e:
             self._logger.error(str(e))
             return {"code": -1}
-
-    # @octoprint.plugin.BlueprintPlugin.route("/makeQR", methods=["GET", "POST"])
-    # def make_qr(self):
-    #     if os.path.exists(self.get_plugin_data_folder() + "/code"):
-    #         os.remove(self.get_plugin_data_folder() + "/code")
-    #     country = request.json["country"]
-    #     self._crealitycloud.start_active_service(country)
-    #     return {"code": 0}
-
-    # @octoprint.plugin.BlueprintPlugin.route("/machineqr", methods=["GET"])
-    # def get_machine_short_id(self):
-    #     code_path = self.get_plugin_data_folder() + "/code"
-    #     if os.path.exists(code_path):
-    #         with open(code_path, "r") as f:
-    #             self.short_code = f.readline()
-    #             f.close()
-    #             return {"code": self.short_code}
-    #     else:
-    #         return {"code": "0"}
 
     @octoprint.plugin.BlueprintPlugin.route("/status", methods=["GET"])
     def get_status(self):
@@ -169,6 +146,8 @@ class CrealitycloudPlugin(
             self._crealitycloud._aliprinter._str_curFeedratePct = cmd
 
     def gCodeHandlerreceived(self, comm_instance, line, *args, **kwargs):
+        leftnum = 0
+        rightnum = 0
         if not self._crealitycloud._iot_connected:
             return line
         if "SD printing byte " in line:
@@ -198,7 +177,7 @@ class CrealitycloudPlugin(
                 
                 if (
                     not self._crealitycloud._aliprinter.printId
-                    and self._crealitycloud._aliprinter.printProgress == 100
+                    and ((float(leftnum) / float(rightnum)) * 100) > 99.9
                 ):
                     self._crealitycloud._aliprinter.state = 2
                     self._crealitycloud._aliprinter.printProgress = 0
