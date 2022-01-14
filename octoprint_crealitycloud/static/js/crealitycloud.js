@@ -32,7 +32,7 @@ $(function () {
               self.isAcitived(true);
               self.getStatus(true)
             }else{
-              alert("绑定创想云失败，请确认Key文件或重新生成Key文件")
+              alert("Fail to install the device due to an invalid file. Please download again or regenerate the Key file.")
             }
           }
         }
